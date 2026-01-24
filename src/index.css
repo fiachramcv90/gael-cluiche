@@ -1,0 +1,86 @@
+/* Custom fonts for child-friendly design */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+/* Base styles */
+:root {
+  /* Space theme colors */
+  --space-dark: #0f0a1e;
+  --space-purple: #1a1033;
+  --space-blue: #162447;
+  --star-gold: #ffd700;
+  --star-silver: #c0c0c0;
+  
+  /* Planet colors */
+  --planet-numbers: #ff6b6b;
+  --planet-letters: #4ecdc4;
+  --planet-colors: #ffe66d;
+  --planet-animals: #95e1d3;
+  --planet-words: #dda0dd;
+  
+  /* UI colors */
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --error: #f87171;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, var(--space-dark) 0%, var(--space-purple) 50%, var(--space-blue) 100%);
+  min-height: 100vh;
+  color: white;
+  overflow-x: hidden;
+}
+
+/* Ensure touch targets are large enough for children */
+button, a, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Prevent text selection during gameplay */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Star twinkle animation */
+@keyframes twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.star {
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+/* Floating animation for planets */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Pulse animation for interactive elements */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px currentColor; }
+  50% { box-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

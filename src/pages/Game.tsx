@@ -4,11 +4,13 @@ import { useGame } from '../context/GameContext';
 import { planets } from '../data/planets';
 import { DinoCharacter } from '../components/game/DinoCharacter';
 import { NumberMatch } from '../components/games/NumberMatch';
+import { Counting } from '../components/games/Counting';
 import { ColorMatch } from '../components/games/ColorMatch';
 
 // Map game types to components
 const gameComponents: Record<string, React.ComponentType> = {
   'number-match': NumberMatch,
+  'counting': Counting,
   'color-match': ColorMatch,
 };
 

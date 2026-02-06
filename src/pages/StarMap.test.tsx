@@ -8,7 +8,7 @@ import { PLAYER_NAME_KEY } from '../utils/playerName';
 // Mock framer-motion
 vi.mock('framer-motion', () => {
   const createMotionComponent = (tag: string) => {
-    return ({ children, whileHover, whileTap, animate, initial, transition, ...props }: any) => {
+    return ({ children, whileHover, whileTap, animate, initial, transition, exit, ...props }: any) => {
       const Tag = tag as any;
       return <Tag {...props}>{children}</Tag>;
     };
@@ -19,6 +19,7 @@ vi.mock('framer-motion', () => {
       div: createMotionComponent('div'),
       h1: createMotionComponent('h1'),
       span: createMotionComponent('span'),
+      button: createMotionComponent('button'),
     },
     AnimatePresence: ({ children }: any) => children,
   };

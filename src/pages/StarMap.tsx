@@ -1,12 +1,16 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { planets, unlockRequirements } from '../data/planets';
 import { StarCounter } from '../components/ui/StarCounter';
 import { DinoCharacter } from '../components/game/DinoCharacter';
+import { SettingsButton } from '../components/ui/SettingsButton';
+import { ChangeNameModal } from '../components/ui/ChangeNameModal';
 
 export function StarMap() {
-  const { state, isPlanetAvailable } = useGame();
+  const { state, isPlanetAvailable, setPlayerName } = useGame();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   return (
     <div className="min-h-screen p-4 md:p-8 relative overflow-hidden">
@@ -42,7 +46,10 @@ export function StarMap() {
         >
           Turas na Réalta ✨
         </motion.h1>
-        <StarCounter stars={state.totalStars} />
+        <div className="flex items-center gap-3">
+          <StarCounter stars={state.totalStars} />
+          <SettingsButton onClick={() => setIsSettingsOpen(true)} />
+        </div>
       </header>
       
       {/* Dino greeting */}
@@ -131,6 +138,14 @@ export function StarMap() {
       >
         🚀
       </motion.div>
+
+      {/* Change Name Modal */}
+      <ChangeNameModal
+        isOpen={isSettingsOpen}
+        currentName={state.playerName ?? ''}
+        onSave={setPlayerName}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   );
 }

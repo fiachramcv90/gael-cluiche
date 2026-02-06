@@ -14,8 +14,8 @@ vi.mock('framer-motion', () => {
           domProps[key] = value
         }
       })
-      const Tag = tag as keyof JSX.IntrinsicElements
-      // @ts-expect-error - dynamic tag
+      const Tag = tag as keyof React.JSX.IntrinsicElements
+      // @ts-ignore - dynamic tag
       return <Tag {...domProps}>{children}</Tag>
     }
   }

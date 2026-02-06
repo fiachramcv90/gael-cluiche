@@ -41,6 +41,8 @@ export interface GameState {
   currentPlanet: string | null;
   currentGame: string | null;
   totalStars: number;
+  /** Stars earned per game, keyed by gameId */
+  gameStars: Record<string, number>;
   unlockedPlanets: string[];
   achievements: Achievement[];
   stickers: Sticker[];

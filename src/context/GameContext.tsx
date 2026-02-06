@@ -1,9 +1,16 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
 import type { GameState, Achievement, Sticker, RocketPart } from '../types';
 import { isPlanetUnlocked } from '../data/planets';
+import { getPlayerName, setPlayerName as savePlayerName } from '../utils/playerName';
+
+// Extended state with player name
+interface ExtendedGameState extends GameState {
+  playerName: string | null;
+}
 
 // Initial state
-const initialState: GameState = {
+const initialState: ExtendedGameState = {
   currentPlanet: null,
   currentGame: null,
   totalStars: 0,
@@ -11,6 +18,7 @@ const initialState: GameState = {
   achievements: [],
   stickers: [],
   rocketParts: [],
+  playerName: null,
 };
 
 // Actions
@@ -23,10 +31,11 @@ type GameAction =
   | { type: 'COLLECT_STICKER'; payload: Sticker }
   | { type: 'UNLOCK_ROCKET_PART'; payload: RocketPart }
   | { type: 'RESET_GAME' }
-  | { type: 'LOAD_SAVED_STATE'; payload: GameState };
+  | { type: 'LOAD_SAVED_STATE'; payload: GameState }
+  | { type: 'SET_PLAYER_NAME'; payload: string };
 
 // Reducer
-function gameReducer(state: GameState, action: GameAction): GameState {
+function gameReducer(state: ExtendedGameState, action: GameAction): ExtendedGameState {
   switch (action.type) {
     case 'SET_CURRENT_PLANET':
       return { ...state, currentPlanet: action.payload };
@@ -81,10 +90,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     
     case 'RESET_GAME':
-      return initialState;
+      return { ...initialState, playerName: state.playerName };
     
     case 'LOAD_SAVED_STATE':
-      return action.payload;
+      return { ...state, ...action.payload };
+    
+    case 'SET_PLAYER_NAME':
+      return { ...state, playerName: action.payload };
     
     default:
       return state;
@@ -93,12 +105,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
 // Context
 interface GameContextType {
-  state: GameState;
+  state: ExtendedGameState;
   dispatch: React.Dispatch<GameAction>;
   setCurrentPlanet: (planet: string | null) => void;
   setCurrentGame: (game: string | null) => void;
   addStars: (stars: number) => void;
   isPlanetAvailable: (planetId: string) => boolean;
+  setPlayerName: (name: string) => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -110,7 +123,7 @@ const STORAGE_KEY = 'gael-cluiche-save';
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, initialState);
   
-  // Load saved state on mount
+  // Load saved state and player name on mount
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -121,11 +134,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
         console.error('Failed to load saved game:', e);
       }
     }
+    
+    // Load player name separately
+    const name = getPlayerName();
+    if (name) {
+      dispatch({ type: 'SET_PLAYER_NAME', payload: name });
+    }
   }, []);
   
-  // Save state on change
+  // Save state on change (excluding playerName which has its own storage)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { playerName: _playerName, ...stateToSave } = state;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
   }, [state]);
   
   // Helper functions
@@ -145,6 +166,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return state.unlockedPlanets.includes(planetId);
   };
   
+  const setPlayerName = (name: string) => {
+    savePlayerName(name);
+    dispatch({ type: 'SET_PLAYER_NAME', payload: name });
+  };
+  
   return (
     <GameContext.Provider value={{
       state,
@@ -153,6 +179,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setCurrentGame,
       addStars,
       isPlanetAvailable,
+      setPlayerName,
     }}>
       {children}
     </GameContext.Provider>

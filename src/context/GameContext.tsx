@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
 import type { GameState, Achievement, Sticker, RocketPart } from '../types';
 import { isPlanetUnlocked } from '../data/planets';
+import { getPlayerName, setPlayerName as savePlayerName, PLAYER_NAME_KEY } from '../utils/playerName';
 
 // Initial state
 const initialState: GameState = {
@@ -11,6 +12,7 @@ const initialState: GameState = {
   achievements: [],
   stickers: [],
   rocketParts: [],
+  playerName: null,
 };
 
 // Actions
@@ -23,7 +25,8 @@ type GameAction =
   | { type: 'COLLECT_STICKER'; payload: Sticker }
   | { type: 'UNLOCK_ROCKET_PART'; payload: RocketPart }
   | { type: 'RESET_GAME' }
-  | { type: 'LOAD_SAVED_STATE'; payload: GameState };
+  | { type: 'LOAD_SAVED_STATE'; payload: GameState }
+  | { type: 'SET_PLAYER_NAME'; payload: string };
 
 // Reducer
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -86,6 +89,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'LOAD_SAVED_STATE':
       return action.payload;
     
+    case 'SET_PLAYER_NAME':
+      return { ...state, playerName: action.payload };
+    
     default:
       return state;
   }
@@ -99,6 +105,8 @@ interface GameContextType {
   setCurrentGame: (game: string | null) => void;
   addStars: (stars: number) => void;
   isPlanetAvailable: (planetId: string) => boolean;
+  setPlayerName: (name: string) => void;
+  hasPlayerName: boolean;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -121,11 +129,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         console.error('Failed to load saved game:', e);
       }
     }
+    
+    // Load player name separately (stored in its own key)
+    const playerName = getPlayerName();
+    if (playerName) {
+      dispatch({ type: 'SET_PLAYER_NAME', payload: playerName });
+    }
   }, []);
   
-  // Save state on change
+  // Save state on change (excluding playerName which has its own storage)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const { playerName: _, ...stateToSave } = state;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
   }, [state]);
   
   // Helper functions
@@ -145,6 +160,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return state.unlockedPlanets.includes(planetId);
   };
   
+  const setPlayerName = (name: string) => {
+    savePlayerName(name); // Save to localStorage
+    dispatch({ type: 'SET_PLAYER_NAME', payload: name });
+  };
+  
+  const hasPlayerName = state.playerName !== null && state.playerName.length > 0;
+  
   return (
     <GameContext.Provider value={{
       state,
@@ -153,6 +175,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setCurrentGame,
       addStars,
       isPlanetAvailable,
+      setPlayerName,
+      hasPlayerName,
     }}>
       {children}
     </GameContext.Provider>

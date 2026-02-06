@@ -45,6 +45,7 @@ export interface GameState {
   achievements: Achievement[];
   stickers: Sticker[];
   rocketParts: RocketPart[];
+  playerName: string | null;
 }
 
 export interface Achievement {

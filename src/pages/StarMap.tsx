@@ -54,7 +54,7 @@ export function StarMap() {
       >
         <DinoCharacter size="small" mood="happy" />
         <div>
-          <p className="text-white font-semibold">Dia duit, a Dhubhaltaigh! 👋</p>
+          <p className="text-white font-semibold">Dia duit, a {state.playerName}! 👋</p>
           <p className="text-white/80 text-sm">Roghnaigh pláinéad!</p>
         </div>
       </motion.div>

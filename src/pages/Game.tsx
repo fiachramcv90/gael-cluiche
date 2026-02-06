@@ -3,28 +3,60 @@ import { motion } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { planets } from '../data/planets';
 import { DinoCharacter } from '../components/game/DinoCharacter';
+import { NumberMatch } from '../components/games/NumberMatch';
 import { ColorMatch } from '../components/games/ColorMatch';
+
+// Map game types to components
+const gameComponents: Record<string, React.ComponentType> = {
+  'number-match': NumberMatch,
+  'color-match': ColorMatch,
+};
 
 export function Game() {
   const { planetId, gameId } = useParams<{ planetId: string; gameId: string }>();
-  const { isPlanetAvailable } = useGame();
+  const { isPlanetAvailable, getGameStars } = useGame();
   
   const planet = planets.find(p => p.id === planetId);
   const game = planet?.miniGames.find(g => g.id === gameId);
+  const gameStarsEarned = game ? getGameStars(game.id) : 0;
   
   // Redirect if invalid
   if (!planet || !game || !isPlanetAvailable(planet.id)) {
     return <Navigate to="/" replace />;
   }
 
-  // Render game content based on type
-  const renderGameContent = () => {
-    switch (game.type) {
-      case 'color-match':
-        return <ColorMatch />;
-      default:
-        // Placeholder for unimplemented games
-        return (
+  // Get the game component if it exists
+  const GameComponent = gameComponents[game.type];
+  
+  return (
+    <div 
+      className="min-h-screen p-4 md:p-8 flex flex-col"
+      style={{ 
+        background: `linear-gradient(135deg, ${planet.color}30 0%, #0f0a1e 100%)` 
+      }}
+    >
+      {/* Header */}
+      <header className="flex justify-between items-center mb-6">
+        <Link 
+          to={`/planet/${planet.id}`}
+          className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+        >
+          <span>←</span>
+          <span>Ar ais</span>
+        </Link>
+        <h2 className="text-xl font-bold text-white">{game.nameIrish}</h2>
+        <div className="text-yellow-400">
+          {'⭐'.repeat(Math.min(gameStarsEarned, game.maxStars))}
+          {'☆'.repeat(Math.max(0, game.maxStars - gameStarsEarned))}
+        </div>
+      </header>
+      
+      {/* Game area */}
+      <div className="flex-1 flex flex-col items-center justify-center">
+        {GameComponent ? (
+          <GameComponent />
+        ) : (
+          /* Placeholder for games not yet implemented */
           <motion.div 
             className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 max-w-lg w-full text-center"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -52,36 +84,7 @@ export function Game() {
               Game type: <code className="bg-white/10 px-2 py-1 rounded">{game.type}</code>
             </p>
           </motion.div>
-        );
-    }
-  };
-  
-  return (
-    <div 
-      className="min-h-screen p-4 md:p-8 flex flex-col"
-      style={{ 
-        background: `linear-gradient(135deg, ${planet.color}30 0%, #0f0a1e 100%)` 
-      }}
-    >
-      {/* Header */}
-      <header className="flex justify-between items-center mb-6">
-        <Link 
-          to={`/planet/${planet.id}`}
-          className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
-        >
-          <span>←</span>
-          <span>Ar ais</span>
-        </Link>
-        <h2 className="text-xl font-bold text-white">{game.nameIrish}</h2>
-        <div className="text-yellow-400">
-          {'⭐'.repeat(game.starsEarned)}
-          {'☆'.repeat(game.maxStars - game.starsEarned)}
-        </div>
-      </header>
-      
-      {/* Game area */}
-      <div className="flex-1 flex flex-col items-center justify-center">
-        {renderGameContent()}
+        )}
       </div>
     </div>
   );

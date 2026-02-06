@@ -8,6 +8,14 @@ import { DinoCharacter } from '../components/game/DinoCharacter';
 import { SettingsButton } from '../components/ui/SettingsButton';
 import { ChangeNameModal } from '../components/ui/ChangeNameModal';
 
+// Pre-generated star positions (computed once at module load)
+const STAR_POSITIONS = Array.from({ length: 50 }).map((_, i) => ({
+  left: ((i * 37) % 100), // Deterministic pseudo-random distribution
+  top: ((i * 73) % 100),
+  duration: 2 + (i % 3),
+  delay: (i % 5) * 0.4,
+}));
+
 export function StarMap() {
   const { state, isPlanetAvailable, setPlayerName } = useGame();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -16,22 +24,22 @@ export function StarMap() {
     <div className="min-h-screen p-4 md:p-8 relative overflow-hidden">
       {/* Background stars */}
       <div className="fixed inset-0 pointer-events-none">
-        {Array.from({ length: 50 }).map((_, i) => (
+        {STAR_POSITIONS.map((star, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-white rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${star.left}%`,
+              top: `${star.top}%`,
             }}
             animate={{
               opacity: [0.3, 1, 0.3],
               scale: [1, 1.2, 1],
             }}
             transition={{
-              duration: 2 + Math.random() * 2,
+              duration: star.duration,
               repeat: Infinity,
-              delay: Math.random() * 2,
+              delay: star.delay,
             }}
           />
         ))}

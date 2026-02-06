@@ -8,9 +8,10 @@ import { PLAYER_NAME_KEY } from '../utils/playerName';
 // Mock framer-motion
 vi.mock('framer-motion', () => {
   const createMotionComponent = (tag: string) => {
-    return ({ children, whileHover, whileTap, animate, initial, transition, exit, ...props }: any) => {
-      const Tag = tag as any;
-      return <Tag {...props}>{children}</Tag>;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return ({ children, whileHover, whileTap, animate, initial, transition, exit, ...domProps }: Record<string, unknown>) => {
+      const Tag = tag as keyof JSX.IntrinsicElements;
+      return <Tag {...domProps}>{children as React.ReactNode}</Tag>;
     };
   };
   
@@ -21,7 +22,7 @@ vi.mock('framer-motion', () => {
       span: createMotionComponent('span'),
       button: createMotionComponent('button'),
     },
-    AnimatePresence: ({ children }: any) => children,
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
   };
 });
 

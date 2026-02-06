@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ChangeNameModalProps {
@@ -10,13 +10,15 @@ interface ChangeNameModalProps {
 
 export function ChangeNameModal({ isOpen, currentName, onSave, onClose }: ChangeNameModalProps) {
   const [name, setName] = useState(currentName);
+  const [lastOpenState, setLastOpenState] = useState(isOpen);
   
-  // Reset local state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setName(currentName);
-    }
-  }, [isOpen, currentName]);
+  // Reset local state when modal opens (avoid setState in effect)
+  if (isOpen && !lastOpenState) {
+    setName(currentName);
+    setLastOpenState(true);
+  } else if (!isOpen && lastOpenState) {
+    setLastOpenState(false);
+  }
 
   const trimmedName = name.trim();
   const isValid = trimmedName.length > 0;

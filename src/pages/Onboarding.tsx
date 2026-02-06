@@ -2,6 +2,14 @@ import { useState, type FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { DinoCharacter } from '../components/game/DinoCharacter';
 
+// Pre-generated star positions (computed once at module load)
+const STAR_POSITIONS = Array.from({ length: 30 }).map((_, i) => ({
+  left: ((i * 37) % 100), // Deterministic pseudo-random distribution
+  top: ((i * 73) % 100),
+  duration: 2 + (i % 3),
+  delay: (i % 5) * 0.4,
+}));
+
 interface OnboardingProps {
   onComplete: (name: string) => void;
 }
@@ -23,22 +31,22 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Background stars */}
       <div className="fixed inset-0 pointer-events-none">
-        {Array.from({ length: 30 }).map((_, i) => (
+        {STAR_POSITIONS.map((star, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-white rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${star.left}%`,
+              top: `${star.top}%`,
             }}
             animate={{
               opacity: [0.3, 1, 0.3],
               scale: [1, 1.5, 1],
             }}
             transition={{
-              duration: 2 + Math.random() * 2,
+              duration: star.duration,
               repeat: Infinity,
-              delay: Math.random() * 2,
+              delay: star.delay,
             }}
           />
         ))}

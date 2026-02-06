@@ -1,7 +1,8 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
 import type { GameState, Achievement, Sticker, RocketPart } from '../types';
 import { isPlanetUnlocked } from '../data/planets';
-import { getPlayerName, setPlayerName as savePlayerName, PLAYER_NAME_KEY } from '../utils/playerName';
+import { getPlayerName, setPlayerName as savePlayerName } from '../utils/playerName';
 
 // Initial state
 const initialState: GameState = {
@@ -139,7 +140,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   
   // Save state on change (excluding playerName which has its own storage)
   useEffect(() => {
-    const { playerName: _, ...stateToSave } = state;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { playerName: _playerName, ...stateToSave } = state;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
   }, [state]);
   

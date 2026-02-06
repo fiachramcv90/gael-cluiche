@@ -1,12 +1,14 @@
-import { useParams, Navigate, Link } from 'react-router-dom';
+import { useParams, Navigate, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { planets } from '../data/planets';
 import { DinoCharacter } from '../components/game/DinoCharacter';
+import { Counting } from '../components/games/Counting';
 
 export function Game() {
   const { planetId, gameId } = useParams<{ planetId: string; gameId: string }>();
-  const { isPlanetAvailable } = useGame();
+  const { isPlanetAvailable, addStars } = useGame();
+  const navigate = useNavigate();
   
   const planet = planets.find(p => p.id === planetId);
   const game = planet?.miniGames.find(g => g.id === gameId);
@@ -15,6 +17,59 @@ export function Game() {
   if (!planet || !game || !isPlanetAvailable(planet.id)) {
     return <Navigate to="/" replace />;
   }
+  
+  // Handle game completion
+  const handleGameComplete = (starsEarned: number) => {
+    addStars(starsEarned);
+    // Navigate back to planet after a delay (victory screen shows first)
+    setTimeout(() => {
+      navigate(`/planet/${planet.id}`);
+    }, 2000);
+  };
+  
+  // Render the appropriate game component
+  const renderGame = () => {
+    switch (game.type) {
+      case 'counting':
+        return (
+          <Counting 
+            planetColor={planet.color} 
+            onComplete={handleGameComplete} 
+          />
+        );
+      default:
+        // Placeholder for games not yet implemented
+        return (
+          <motion.div 
+            className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 max-w-lg w-full text-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <DinoCharacter size="large" mood="excited" />
+            
+            <h3 className="text-2xl font-bold text-white mt-6 mb-2">
+              {game.nameIrish}
+            </h3>
+            <p className="text-white/70 mb-6">
+              {game.description}
+            </p>
+            
+            <div className="bg-white/5 rounded-xl p-6 mb-6">
+              <p className="text-white/80 text-lg">
+                🚧 Ag teacht go luath! 🚧
+              </p>
+              <p className="text-white/60 text-sm mt-2">
+                Coming soon!
+              </p>
+            </div>
+            
+            <p className="text-white/50 text-sm">
+              Game type: <code className="bg-white/10 px-2 py-1 rounded">{game.type}</code>
+            </p>
+          </motion.div>
+        );
+    }
+  };
   
   return (
     <div 
@@ -39,35 +94,9 @@ export function Game() {
         </div>
       </header>
       
-      {/* Game area - placeholder for now */}
+      {/* Game area */}
       <div className="flex-1 flex flex-col items-center justify-center">
-        <motion.div 
-          className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 max-w-lg w-full text-center"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <DinoCharacter size="large" mood="excited" />
-          
-          <h3 className="text-2xl font-bold text-white mt-6 mb-2">
-            {game.nameIrish}
-          </h3>
-          <p className="text-white/70 mb-6">
-            {game.description}
-          </p>
-          
-          <div className="bg-white/5 rounded-xl p-6 mb-6">
-            <p className="text-white/80 text-lg">
-              🚧 Ag teacht go luath! 🚧
-            </p>
-            <p className="text-white/60 text-sm mt-2">
-              Coming soon!
-            </p>
-          </div>
-          
-          <p className="text-white/50 text-sm">
-            Game type: <code className="bg-white/10 px-2 py-1 rounded">{game.type}</code>
-          </p>
-        </motion.div>
+        {renderGame()}
       </div>
     </div>
   );

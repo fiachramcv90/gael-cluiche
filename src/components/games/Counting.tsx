@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DinoCharacter } from '../game/DinoCharacter';
 import { numbers1to20 } from '../../data/numbers';
@@ -67,6 +67,26 @@ function generateOptions(correctValue: number): number[] {
   return shuffleArray([...options]);
 }
 
+// Generate confetti particle data
+interface ConfettiParticle {
+  left: number;
+  yOffset: number;
+  xOffset: number;
+  rotation: number;
+  emoji: string;
+}
+
+function generateConfettiParticles(count: number): ConfettiParticle[] {
+  const emojis = ['🌟', '✨', '💫', '⭐'];
+  return Array.from({ length: count }, () => ({
+    left: Math.random() * 100,
+    yOffset: -200 - Math.random() * 100,
+    xOffset: (Math.random() - 0.5) * 100,
+    rotation: Math.random() * 360,
+    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+  }));
+}
+
 export function Counting({ planetColor, onComplete }: CountingProps) {
   const [currentRound, setCurrentRound] = useState(1);
   const [correctCount, setCorrectCount] = useState(0);
@@ -75,6 +95,7 @@ export function Counting({ planetColor, onComplete }: CountingProps) {
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [showVictory, setShowVictory] = useState(false);
   const [starPositions, setStarPositions] = useState(() => generateStarPositions(starCount));
+  const [confettiParticles, setConfettiParticles] = useState<ConfettiParticle[]>([]);
   
   const TOTAL_ROUNDS = 5;
   
@@ -99,6 +120,8 @@ export function Counting({ planetColor, onComplete }: CountingProps) {
     if (selectedValue === starCount) {
       setFeedback('correct');
       setCorrectCount(prev => prev + 1);
+      // Generate confetti particles when correct
+      setConfettiParticles(generateConfettiParticles(20));
       
       // Check if game complete
       if (correctCount + 1 >= TOTAL_ROUNDS) {
@@ -207,26 +230,26 @@ export function Counting({ planetColor, onComplete }: CountingProps) {
         <AnimatePresence>
           {showConfetti && (
             <>
-              {Array.from({ length: 20 }, (_, i) => (
+              {confettiParticles.map((particle, i) => (
                 <motion.div
                   key={`confetti-${i}`}
                   className="absolute text-2xl"
                   style={{
-                    left: `${Math.random() * 100}%`,
+                    left: `${particle.left}%`,
                     top: '50%',
                   }}
                   initial={{ y: 0, opacity: 1, scale: 0 }}
                   animate={{
-                    y: -200 - Math.random() * 100,
-                    x: (Math.random() - 0.5) * 100,
+                    y: particle.yOffset,
+                    x: particle.xOffset,
                     opacity: 0,
                     scale: 1,
-                    rotate: Math.random() * 360,
+                    rotate: particle.rotation,
                   }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 1 }}
                 >
-                  {['🌟', '✨', '💫', '⭐'][Math.floor(Math.random() * 4)]}
+                  {particle.emoji}
                 </motion.div>
               ))}
             </>

@@ -8,7 +8,7 @@ import { gamePhrases } from '../data/phrases';
 
 export function Planet() {
   const { planetId } = useParams<{ planetId: string }>();
-  const { state, isPlanetAvailable } = useGame();
+  const { state, isPlanetAvailable, getGameStars } = useGame();
   
   const planet = planets.find(p => p.id === planetId);
   
@@ -64,51 +64,54 @@ export function Planet() {
       
       {/* Mini-games grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl">
-        {planet.miniGames.map((game, index) => (
-          <motion.div
-            key={game.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 * index + 0.3 }}
-          >
-            <Link to={`/game/${planet.id}/${game.id}`}>
-              <motion.div
-                className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 cursor-pointer border-2 border-transparent hover:border-white/30 transition-colors"
-                whileHover={{ scale: 1.03, y: -5 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <h3 className="text-xl font-bold text-white mb-1">
-                  {game.nameIrish}
-                </h3>
-                <p className="text-white/60 text-sm mb-3">
-                  {game.name}
-                </p>
-                <p className="text-white/80 text-sm mb-4">
-                  {game.description}
-                </p>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-white/50 capitalize">
-                    {game.difficulty}
-                  </span>
-                  <span className="text-sm text-yellow-400">
-                    {'⭐'.repeat(game.starsEarned)}
-                    {'☆'.repeat(game.maxStars - game.starsEarned)}
-                  </span>
-                </div>
-                
-                {/* Play button */}
-                <motion.div 
-                  className="mt-4 py-2 px-4 rounded-full text-center font-bold text-white"
-                  style={{ backgroundColor: planet.color }}
-                  whileHover={{ scale: 1.05 }}
+        {planet.miniGames.map((game, index) => {
+          const gameStarsEarned = getGameStars(game.id);
+          return (
+            <motion.div
+              key={game.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * index + 0.3 }}
+            >
+              <Link to={`/game/${planet.id}/${game.id}`}>
+                <motion.div
+                  className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 cursor-pointer border-2 border-transparent hover:border-white/30 transition-colors"
+                  whileHover={{ scale: 1.03, y: -5 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  Imir! 🎮
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    {game.nameIrish}
+                  </h3>
+                  <p className="text-white/60 text-sm mb-3">
+                    {game.name}
+                  </p>
+                  <p className="text-white/80 text-sm mb-4">
+                    {game.description}
+                  </p>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-white/50 capitalize">
+                      {game.difficulty}
+                    </span>
+                    <span className="text-sm text-yellow-400">
+                      {'⭐'.repeat(Math.min(gameStarsEarned, game.maxStars))}
+                      {'☆'.repeat(Math.max(0, game.maxStars - gameStarsEarned))}
+                    </span>
+                  </div>
+                  
+                  {/* Play button */}
+                  <motion.div 
+                    className="mt-4 py-2 px-4 rounded-full text-center font-bold text-white"
+                    style={{ backgroundColor: planet.color }}
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    Imir! 🎮
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-            </Link>
-          </motion.div>
-        ))}
+              </Link>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );

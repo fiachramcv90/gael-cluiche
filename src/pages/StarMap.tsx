@@ -113,7 +113,7 @@ function ChangeNameModal({
 }
 
 export function StarMap() {
-  const { state, isPlanetAvailable, setPlayerName } = useGame();
+  const { state, isPlanetAvailable, getPlanetStars, setPlayerName } = useGame();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   return (
@@ -175,6 +175,7 @@ export function StarMap() {
         {planets.map((planet, index) => {
           const isUnlocked = isPlanetAvailable(planet.id);
           const starsNeeded = unlockRequirements[planet.id] ?? 0;
+          const planetStarsEarned = getPlanetStars(planet.id);
           
           return (
             <motion.div
@@ -196,7 +197,7 @@ export function StarMap() {
                       {planet.nameIrish}
                     </span>
                     <span className="text-white/80 text-xs mt-1">
-                      ⭐ {planet.starsEarned}/{planet.starsTotal}
+                      ⭐ {Math.min(planetStarsEarned, planet.starsTotal)}/{planet.starsTotal}
                     </span>
                     
                     {/* Glow effect */}

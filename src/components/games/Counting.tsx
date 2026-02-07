@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { useGame } from '../../context/GameContext'
@@ -83,6 +84,7 @@ function generateStarPositions(count: number): Array<{ x: number; y: number; rot
 }
 
 export function Counting() {
+  const { gameId } = useParams<{ gameId: string }>()
   const { addStars } = useGame()
   const [currentQuestion, setCurrentQuestion] = useState<GameQuestion>(generateQuestion)
   const [correctCount, setCorrectCount] = useState(0)
@@ -114,7 +116,7 @@ export function Counting() {
         // Game complete
         setTimeout(() => {
           setIsGameComplete(true)
-          addStars(STARS_PER_GAME)
+          addStars(gameId!, STARS_PER_GAME)
           fireConfetti()
         }, 1000)
       } else {

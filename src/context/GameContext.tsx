@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from 'react';
 import type { GameState, Achievement, Sticker, RocketPart } from '../types';
-import { isPlanetUnlocked } from '../data/planets';
+import { isPlanetUnlocked, planets } from '../data/planets';
 import { getPlayerName, setPlayerName as savePlayerName } from '../utils/playerName';
 
 // Extended state with player name
@@ -14,6 +14,7 @@ const initialState: ExtendedGameState = {
   currentPlanet: null,
   currentGame: null,
   totalStars: 0,
+  gameStars: {}, // Stars earned per game, keyed by gameId
   unlockedPlanets: ['numbers'], // First planet always unlocked
   achievements: [],
   stickers: [],
@@ -25,7 +26,7 @@ const initialState: ExtendedGameState = {
 type GameAction =
   | { type: 'SET_CURRENT_PLANET'; payload: string | null }
   | { type: 'SET_CURRENT_GAME'; payload: string | null }
-  | { type: 'ADD_STARS'; payload: number }
+  | { type: 'ADD_STARS'; payload: { gameId: string; stars: number } }
   | { type: 'UNLOCK_PLANET'; payload: string }
   | { type: 'ADD_ACHIEVEMENT'; payload: Achievement }
   | { type: 'COLLECT_STICKER'; payload: Sticker }
@@ -44,10 +45,28 @@ function gameReducer(state: ExtendedGameState, action: GameAction): ExtendedGame
       return { ...state, currentGame: action.payload };
     
     case 'ADD_STARS': {
-      const newTotal = state.totalStars + action.payload;
-      // Check for newly unlocked planets
+      const { gameId, stars } = action.payload;
+      
+      // Normalize incoming stars to a finite, non-negative integer
+      const normalizedStars = Number.isFinite(stars) ? Math.max(0, Math.floor(stars)) : 0;
+      
+      // Safely access current state values (handle old localStorage without gameStars)
+      const currentGameStars = Math.max(0, Math.floor(state.gameStars?.[gameId] ?? 0));
+      const safeTotalStars = Math.max(0, Math.floor(state.totalStars ?? 0));
+      
+      // Only add the difference if new score is higher (don't penalize replays)
+      const starsToAdd = Math.max(0, normalizedStars - currentGameStars);
+      const newTotal = safeTotalStars + starsToAdd;
+      
+      // Update per-game stars (keep the best score)
+      const newGameStars = {
+        ...(state.gameStars ?? {}),
+        [gameId]: Math.max(currentGameStars, normalizedStars),
+      };
+      
+      // Check for newly unlocked planets (derive IDs from data to stay in sync)
       const newUnlocked = [...state.unlockedPlanets];
-      const planetIds = ['numbers', 'letters', 'colors', 'animals', 'words'];
+      const planetIds = planets.map(p => p.id);
       
       planetIds.forEach(id => {
         if (!newUnlocked.includes(id) && isPlanetUnlocked(id, newTotal)) {
@@ -58,6 +77,7 @@ function gameReducer(state: ExtendedGameState, action: GameAction): ExtendedGame
       return {
         ...state,
         totalStars: newTotal,
+        gameStars: newGameStars,
         unlockedPlanets: newUnlocked,
       };
     }
@@ -93,7 +113,8 @@ function gameReducer(state: ExtendedGameState, action: GameAction): ExtendedGame
       return { ...initialState, playerName: state.playerName };
     
     case 'LOAD_SAVED_STATE':
-      return { ...state, ...action.payload };
+      // Merge with initialState to ensure all fields exist (handles old saves missing gameStars)
+      return { ...initialState, ...state, ...action.payload, gameStars: { ...action.payload.gameStars } };
     
     case 'SET_PLAYER_NAME':
       return { ...state, playerName: action.payload };
@@ -109,7 +130,9 @@ interface GameContextType {
   dispatch: React.Dispatch<GameAction>;
   setCurrentPlanet: (planet: string | null) => void;
   setCurrentGame: (game: string | null) => void;
-  addStars: (stars: number) => void;
+  addStars: (gameId: string, stars: number) => void;
+  getGameStars: (gameId: string) => number;
+  getPlanetStars: (planetId: string) => number;
   isPlanetAvailable: (planetId: string) => boolean;
   setPlayerName: (name: string) => void;
 }
@@ -158,9 +181,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_CURRENT_GAME', payload: game });
   };
   
-  const addStars = (stars: number) => {
-    dispatch({ type: 'ADD_STARS', payload: stars });
+  const addStars = (gameId: string, stars: number) => {
+    dispatch({ type: 'ADD_STARS', payload: { gameId, stars } });
   };
+  
+  const getGameStars = useCallback((gameId: string): number => {
+    return state.gameStars?.[gameId] ?? 0;
+  }, [state.gameStars]);
+  
+  const getPlanetStars = useCallback((planetId: string): number => {
+    const planet = planets.find(p => p.id === planetId);
+    if (!planet) return 0;
+    return planet.miniGames.reduce((total, game) => {
+      return total + (state.gameStars?.[game.id] ?? 0);
+    }, 0);
+  }, [state.gameStars]);
   
   const isPlanetAvailable = (planetId: string) => {
     return state.unlockedPlanets.includes(planetId);
@@ -178,6 +213,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setCurrentPlanet,
       setCurrentGame,
       addStars,
+      getGameStars,
+      getPlanetStars,
       isPlanetAvailable,
       setPlayerName,
     }}>

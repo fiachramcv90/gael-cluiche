@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DinoCharacter } from '../game/DinoCharacter'
 import { Button } from '../ui/Button'
@@ -52,6 +52,18 @@ export function ColorMatch() {
     }
   })
 
+  // Track timeout IDs for cleanup
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
+
   const nextRound = useCallback(() => {
     const newColor = pickRandomColor()
     setGameState(prev => ({
@@ -65,6 +77,12 @@ export function ColorMatch() {
 
   const handleAnswer = (selectedColor: ColorWord) => {
     if (gameState.feedback) return // Prevent double-clicks
+
+    // Clear any pending timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
 
     const isCorrect = selectedColor.id === gameState.currentColor.id
 
@@ -82,7 +100,7 @@ export function ColorMatch() {
 
       // Auto-advance to next round after feedback
       if (!isComplete) {
-        setTimeout(nextRound, 1500)
+        timeoutRef.current = setTimeout(nextRound, 1500)
       }
     } else {
       setGameState(prev => ({
@@ -92,7 +110,7 @@ export function ColorMatch() {
       }))
 
       // Clear wrong feedback after a moment
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setGameState(prev => ({
           ...prev,
           feedback: null,
@@ -103,6 +121,12 @@ export function ColorMatch() {
   }
 
   const resetGame = () => {
+    // Clear any pending timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+
     const newColor = pickRandomColor()
     setGameState({
       score: 0,
@@ -202,7 +226,7 @@ export function ColorMatch() {
           <motion.button
             key={option.id}
             onClick={() => handleAnswer(option)}
-            disabled={gameState.feedback === 'correct'}
+            disabled={gameState.feedback !== null}
             className={`
               py-4 px-6 rounded-xl text-lg font-bold
               transition-all duration-200

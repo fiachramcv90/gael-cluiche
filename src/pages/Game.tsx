@@ -5,19 +5,22 @@ import { planets } from '../data/planets';
 import { DinoCharacter } from '../components/game/DinoCharacter';
 import { NumberMatch } from '../components/games/NumberMatch';
 import { Counting } from '../components/games/Counting';
+import { ColorMatch } from '../components/games/ColorMatch';
 
 // Map game types to components
 const gameComponents: Record<string, React.ComponentType> = {
   'number-match': NumberMatch,
   'counting': Counting,
+  'color-match': ColorMatch,
 };
 
 export function Game() {
   const { planetId, gameId } = useParams<{ planetId: string; gameId: string }>();
-  const { isPlanetAvailable } = useGame();
+  const { isPlanetAvailable, getGameStars } = useGame();
   
   const planet = planets.find(p => p.id === planetId);
   const game = planet?.miniGames.find(g => g.id === gameId);
+  const gameStarsEarned = game ? getGameStars(game.id) : 0;
   
   // Redirect if invalid
   if (!planet || !game || !isPlanetAvailable(planet.id)) {
@@ -45,8 +48,8 @@ export function Game() {
         </Link>
         <h2 className="text-xl font-bold text-white">{game.nameIrish}</h2>
         <div className="text-yellow-400">
-          {'⭐'.repeat(game.starsEarned)}
-          {'☆'.repeat(game.maxStars - game.starsEarned)}
+          {'⭐'.repeat(Math.min(gameStarsEarned, game.maxStars))}
+          {'☆'.repeat(Math.max(0, game.maxStars - gameStarsEarned))}
         </div>
       </header>
       
